@@ -4,6 +4,7 @@ A tool for opening Bag(TM) using recently discovered manufacturer backdoor.
 """
 import math
 
+
 def read_int():
     """A helper function for reading an integer from stdin
 
@@ -38,7 +39,7 @@ def press_button(display):
     :rtype: bool
     """
     press = False
-    if display%17 == 0:
+    if display % 17 == 0:
         press = True
     return press
 
@@ -51,17 +52,17 @@ def button_layer(bag_state):
     :return: None
     """
     button = True
-    while button == True:
+    while button is True:
         print("What number is displayed?")
-        disp = input('>> ')
+        disp = int(input('>> '))
         button = press_button(disp)
-        if button == True:
+        if button is True:
             print("Press the button!")
             bag_state['suspicion level'] += 1
         else:
             print("Leave the button alone now.")
-    print("Button layer is complete")
-    
+    print("Button layer is complete.")
+
 
 def which_to_press(history, displayed):
     """Returns the integer value of the button to press according to the
@@ -80,19 +81,19 @@ def which_to_press(history, displayed):
     if displayed == 1:
         press = 4
     elif displayed == 2:
-        press = history[0][1] #value pressed in first round
+        press = history[0][1]  # value pressed in first round
     elif displayed == 3:
-        prevRound = len(history) - 1 #previous round
+        prevRound = len(history) - 1  # previous round
         press = history[prevRound][0]
     elif displayed == 4:
-        foundRounds = len(history) #rounds completed so far
-        specRound = math.floor(foundRounds / 2) + 1 #specified round
-        numDisp = history[specRound-1][0] #number displayed during specRound
-        numPrsd = history[specRound-1][1] #number pressed during specRound
-        press = max(numDisp,numPrsd)
+        foundRounds = len(history)  # rounds completed so far
+        specRound = math.floor(foundRounds / 2) + 1  # specified round
+        numDisp = history[specRound-1][0]  # number displayed during specRound
+        numPrsd = history[specRound-1][1]  # number pressed during specRound
+        press = max(numDisp, numPrsd)
     return press
-        
-        
+
+
 def history_layer(bag_state):
     """Interact with the user to override the History Layer
 
@@ -100,18 +101,18 @@ def history_layer(bag_state):
 
     :return: None
     """
-    disp = 0
-    pressed = 0
-    history = []
+    disp = 0  # holds the displayed value
+    pressed = 0  # holds value of button to be pressed
+    history = []  # a list of dicts that holds each round
     for round in range(5):
         print("What number is displayed right now?")
-        disp = input('>> ')
+        disp = int(input('>> '))
         pressed = which_to_press(history, disp)
-        print("Press the button labeled {0}".format(pressed))
-        history.append((disp, pressed)) #round saved in history
-        if pressed%2 != 0:
+        print("Press the button labeled", pressed)
+        history.append((disp, pressed))  # round saved in history
+        if pressed % 2 != 0:  # if pressed is odd
             bag_state['suspicion level'] += 1
-    print("History layer complete")
+    print("History layer complete.")
     return
 
 
@@ -129,9 +130,9 @@ def dial_to(bag_state, code):
     serLength = len(bag_state['serial number'])
     index1 = int(bag_state['serial number'][serLength-4])
     index2 = int(bag_state['serial number'][serLength-2])
-    cut = code[index1:index2 + 1] #inclusive substring from code
+    cut = code[index1:index2 + 1]  # inclusive substring from code
     for letter in cut:
-        if letter < dial:
+        if letter < dial:  # i.e. if ascii value is lower
             dial = letter
     return dial
 
@@ -145,7 +146,7 @@ def code_layer(bag_state):
     """
     print("What is the displayed code?")
     codeword = input('>> ')
-    print("Turn the dial to " + dial_to(bag_state, codeword))
+    print("Turn the dial to", dial_to(bag_state, codeword))
     print("Code layer complete.")
     return
 
@@ -164,7 +165,26 @@ def should_flip(bag_state, has_red, has_blue, has_green):
     :return: True if the user should flip (toggle) this switch, otherwise False
     :rtype: bool
     """
-    pass
+    flip = False  # assume false until conditions are met
+    if has_red == 1:
+        if has_blue == 1:
+            if has_green == 1:
+                if 'Q' in bag_state['serial number']:  # all lights on
+                    flip = True
+            else:  # only red and blue lights on
+                if bag_state['indicators']['check engine'] == 1:
+                    flip = True
+        elif has_green == 1:  # only red and green lights on
+            if bag_state['indicators']['everything ok'] == 1:
+                flip = True
+    elif has_blue == 1:
+        if has_green == 0:  # just blue light on
+            if 'Y' in bag_state['serial number']:
+                flip = True
+    elif has_green == 1:  # just green light on
+        if 'J' in bag_state['serial number']:
+            flip = True
+    return flip
 
 
 def switches_layer(bag_state):
@@ -174,7 +194,19 @@ def switches_layer(bag_state):
 
     :return: None
     """
-    pass
+    colors = ('red', 'blue', 'green')  # light colors
+    lights = [0, 0, 0]  # holds bools for each light's state
+    for switch in range(bag_state['switch count']):
+        for c in range(3):  # three lights, three questions
+            print("Does switch", switch, "have a", colors[c], "light?")
+            lights[c] = bool(int(input('>> ')))  # 0 is read as false
+        if should_flip(bag_state, lights[0], lights[1], lights[2]) is True:
+            print("Flip that switch\n")
+            bag_state['suspicion level'] += 2
+        else:
+            print("Do NOT flip that switch\n")
+    print("Switches layer is complete.")
+    return
 
 
 def get_bag_state():

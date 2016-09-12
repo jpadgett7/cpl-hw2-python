@@ -1,8 +1,6 @@
 # Import pytest, so that we can use xfail.
 # You should remove this if you find you no longer need pytest.
 # flake8 will remind you.
-import pytest
-import math
 
 # Import all of our testable functions from main.
 from main import press_button, which_to_press, dial_to, should_flip
@@ -14,7 +12,7 @@ def test_press_button():
     Tests press_button function.
     """
     testVals = (17, 85, 39)
-    testOuts = (1,1,0)
+    testOuts = (1, 1, 0)
     for i in range(3):
         assert press_button(testVals[i]) == testOuts[i]
 
@@ -24,11 +22,11 @@ def test_which_to_press():
 
     Tests which_to_press function.
     """
-    testHist1 = [(1,4),(3,1),(2,4),(4,3)]
-    testHist2 = [(1,4),(4,4),(2,4)]
-    testDisp = (1,2,3,4)
-    expPress1 = 4 #4 should always be pressed with the first test history
-    expPress2 = (4,4,2,4) #expected values for second test history
+    testHist1 = [(1, 4), (3, 1), (2, 4), (4, 3)]
+    testHist2 = [(1, 4), (4, 4), (2, 4)]
+    testDisp = (1, 2, 3, 4)
+    expPress1 = 4  # 4 should always be pressed with the first test history
+    expPress2 = (4, 4, 2, 4)  # expected values for second test history
     for val in testDisp:
         assert which_to_press(testHist1, val) == expPress1
         assert which_to_press(testHist2, val) == expPress2[val-1]
@@ -51,4 +49,18 @@ def test_should_flip():
 
     Tests should_flip function.
     """
-    pytest.xfail("Test is not implemented yet.")
+    testBag = {
+        'serial number': 'FFJXQK89999',
+        'indicators': {
+            'check engine': 1,
+            'everything ok': 0
+        }
+    }
+    assert should_flip(testBag, 0, 0, 0) == 0
+    assert should_flip(testBag, 0, 0, 1) == 1
+    assert should_flip(testBag, 0, 1, 0) == 0
+    assert should_flip(testBag, 0, 1, 1) == 0
+    assert should_flip(testBag, 1, 0, 0) == 0
+    assert should_flip(testBag, 1, 0, 1) == 0
+    assert should_flip(testBag, 1, 1, 0) == 1
+    assert should_flip(testBag, 1, 1, 1) == 1

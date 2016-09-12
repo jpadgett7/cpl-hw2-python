@@ -2,7 +2,7 @@
 
 A tool for opening Bag(TM) using recently discovered manufacturer backdoor.
 """
-
+import math
 
 def read_int():
     """A helper function for reading an integer from stdin
@@ -37,7 +37,10 @@ def press_button(display):
     :return: True if the button should be pressed
     :rtype: bool
     """
-    pass
+    press = False
+    if display%17 == 0:
+        press = True
+    return press
 
 
 def button_layer(bag_state):
@@ -47,8 +50,18 @@ def button_layer(bag_state):
 
     :return: None
     """
-    pass
-
+    button = True
+    while button == True:
+        print("What number is displayed?")
+        disp = input('>> ')
+        button = press_button(disp)
+        if button == True:
+            print("Press the button!")
+            bag_state['suspicion level'] += 1
+        else:
+            print("Leave the button alone now.")
+    print("Button layer is complete")
+    
 
 def which_to_press(history, displayed):
     """Returns the integer value of the button to press according to the
@@ -63,9 +76,23 @@ def which_to_press(history, displayed):
     :return: The label of the button to press.
     :rtype: int
     """
-    pass
-
-
+    press = 0
+    if displayed == 1:
+        press = 4
+    elif displayed == 2:
+        press = history[0][1] #value pressed in first round
+    elif displayed == 3:
+        prevRound = len(history) - 1 #previous round
+        press = history[prevRound][0]
+    elif displayed == 4:
+        foundRounds = len(history) #rounds completed so far
+        specRound = math.floor(foundRounds / 2) + 1 #specified round
+        numDisp = history[specRound-1][0] #number displayed during specRound
+        numPrsd = history[specRound-1][1] #number pressed during specRound
+        press = max(numDisp,numPrsd)
+    return press
+        
+        
 def history_layer(bag_state):
     """Interact with the user to override the History Layer
 
@@ -73,7 +100,19 @@ def history_layer(bag_state):
 
     :return: None
     """
-    pass
+    disp = 0
+    pressed = 0
+    history = []
+    for round in range(5):
+        print("What number is displayed right now?")
+        disp = input('>> ')
+        pressed = which_to_press(history, disp)
+        print("Press the button labeled {0}".format(pressed))
+        history.append((disp, pressed)) #round saved in history
+        if pressed%2 != 0:
+            bag_state['suspicion level'] += 1
+    print("History layer complete")
+    return
 
 
 def dial_to(bag_state, code):
@@ -86,7 +125,15 @@ def dial_to(bag_state, code):
     :return: The letter to turn the dial to
     :rtype: str
     """
-    pass
+    dial = 'z'
+    serLength = len(bag_state['serial number'])
+    index1 = int(bag_state['serial number'][serLength-4])
+    index2 = int(bag_state['serial number'][serLength-2])
+    cut = code[index1:index2 + 1] #inclusive substring from code
+    for letter in cut:
+        if letter < dial:
+            dial = letter
+    return dial
 
 
 def code_layer(bag_state):
@@ -96,7 +143,11 @@ def code_layer(bag_state):
 
     :return: None
     """
-    pass
+    print("What is the displayed code?")
+    codeword = input('>> ')
+    print("Turn the dial to " + dial_to(bag_state, codeword))
+    print("Code layer complete.")
+    return
 
 
 def should_flip(bag_state, has_red, has_blue, has_green):
